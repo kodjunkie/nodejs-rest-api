@@ -1,0 +1,14 @@
+{
+  "name": "restapi",
+  "version": "1.0.0",
+  "description": "Rest API with Node Js and Express Js",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "rest"
+  ],
+  "author": "Lawrence Onah",
+  "license": "MIT"
+}
