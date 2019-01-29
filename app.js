@@ -24,7 +24,7 @@ app.use((error, req, res, next) => {
 	if (error) {
 		const message = error.message;
 		console.log(message);
-		return res.status(error.statusCode || 500).json({message: message});
+		return res.status(error.statusCode || 500).json({ message: message });
 	}
 	next();
 });
