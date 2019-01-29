@@ -1,14 +1,10 @@
-exports.throwError = (message, status) => {
+exports.throwError = (message, code = 500) => {
 	const error = new Error(message);
-	if (status) {
-		error.statusCode = status;
-	}
+	error.statusCode = code;
 	throw error;
 };
 
-exports.handleError = (error, next, status) => {
-	if (status) {
-		error.statusCode = status;
-	}
+exports.handleError = (error, next, code = 500) => {
+	error.statusCode = code;
 	next(error);
 };
