@@ -92,3 +92,19 @@ exports.updatePost = (req, res, next) => {
 		})
 		.catch(err => Err.catchError(err, next));
 };
+
+exports.deletePost = (req, res, next) => {
+	const postId = req.params.postId;
+	Post.findById(postId)
+		.then(post => {
+			if (!post) {
+				return Err.throwError('Post not found!', 404);
+			}
+			removeFile(post.imageUrl);
+			return Post.findByIdAndDelete(post._id);
+		})
+		.then(() => {
+			res.status(200).json({ message: 'Post deleted.' });
+		})
+		.catch(err => Err.catchError(err, next));
+};
