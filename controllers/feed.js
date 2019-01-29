@@ -6,10 +6,20 @@ const Post = require('../models/post');
 const Err = require('../util/error-handler');
 
 exports.getPosts = (req, res, next) => {
+	const page = +req.query.page || 1;
+	const perPage = 2;
+	let totalItems = 0;
 	Post.find()
-		.select('-updatedAt')
+		.countDocuments()
+		.then(numPosts => {
+			totalItems = numPosts;
+			return Post.find()
+				.skip((page - 1) * perPage)
+				.limit(perPage)
+				.select('-updatedAt');
+		})
 		.then(posts => {
-			res.status(200).json({ posts: posts });
+			res.status(200).json({ posts: posts, totalItems: totalItems });
 		})
 		.catch(err => Err.catchError(err, next));
 };
