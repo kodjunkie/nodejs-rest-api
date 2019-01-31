@@ -1,6 +1,9 @@
-exports.throwError = (message, statusCode = 500) => {
+exports.throwError = (message, statusCode = 500, data = null) => {
 	const error = new Error(message);
 	error.statusCode = statusCode;
+	if (data) {
+		error.data = data;
+	}
 	throw error;
 };
 
@@ -11,9 +14,14 @@ exports.catchError = (error, next, statusCode = 500) => {
 
 exports.errorHandler = (error, req, res, next) => {
 	if (error) {
-		const message = error.message;
 		console.log(error);
-		return res.status(error.statusCode || 500).json({ message: message });
+
+		let resObj = { message: error.message };
+		if (error.data) {
+			resObj = { message: error.message, data: error.data };
+		}
+
+		return res.status(error.statusCode || 500).json(resObj);
 	}
 	next();
 };

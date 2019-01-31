@@ -21,6 +21,7 @@
 		"eslint-plugin-standard": "^4.0.0"
 	},
 	"dependencies": {
+		"bcryptjs": "^2.4.3",
 		"body-parser": "^1.18.3",
 		"express": "^4.16.4",
 		"express-validator": "^5.3.1",
