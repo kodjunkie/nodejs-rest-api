@@ -2,6 +2,7 @@ const { removeFile } = require('../util/storage');
 
 const { validationResult } = require('express-validator/check');
 
+const io = require('../socket');
 const Post = require('../models/post');
 const User = require('../models/user');
 const Err = require('../util/error-handler');
@@ -12,6 +13,7 @@ exports.getPosts = async (req, res, next) => {
 	try {
 		const totalItems = await Post.find().countDocuments();
 		const posts = await Post.find()
+			.populate('creator')
 			.skip((page - 1) * perPage)
 			.limit(perPage)
 			.select('-updatedAt');
@@ -22,7 +24,7 @@ exports.getPosts = async (req, res, next) => {
 	}
 };
 
-exports.createPost = (req, res, next) => {
+exports.createPost = async (req, res, next) => {
 	const errors = validationResult(req);
 
 	if (!errors.isEmpty()) {
@@ -31,34 +33,31 @@ exports.createPost = (req, res, next) => {
 
 	const title = req.body.title;
 	const content = req.body.content;
-	let creator;
 	const post = new Post({
 		title: title,
 		content: content,
 		imageUrl: '/' + req.file.path,
 		creator: req.userId
 	});
-	post
-		.save()
-		.then(post => {
-			return User.findById(req.userId);
-		})
-		.then(user => {
-			creator = user;
-			user.posts.push(post);
-			return user.save();
-		})
-		.then(user => {
-			res.status(201).json({
-				message: 'Post created successfully.',
-				post: post,
-				creator: {
-					_id: creator._id.toString(),
-					name: creator.name
-				}
-			});
-		})
-		.catch(err => Err.catchError(err, next));
+	try {
+		await post.save();
+		const user = await User.findById(req.userId);
+		user.posts.push(post);
+		await user.save();
+
+		io.getIO().emit('posts', { action: 'create', post: { ...post._doc, creator: user._doc } });
+
+		res.status(201).json({
+			message: 'Post created successfully.',
+			post: post,
+			creator: {
+				_id: user._id.toString(),
+				name: user.name
+			}
+		});
+	} catch (err) {
+		Err.catchError(err, next);
+	}
 };
 
 exports.getPost = (req, res, next) => {

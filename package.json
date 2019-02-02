@@ -27,6 +27,7 @@
 		"express-validator": "^5.3.1",
 		"jsonwebtoken": "^8.4.0",
 		"mongoose": "^5.4.7",
-		"multer": "^1.4.1"
+		"multer": "^1.4.1",
+		"socket.io": "^2.2.0"
 	}
 }
