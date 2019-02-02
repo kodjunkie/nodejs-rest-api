@@ -14,6 +14,7 @@ exports.getPosts = async (req, res, next) => {
 		const totalItems = await Post.find().countDocuments();
 		const posts = await Post.find()
 			.populate('creator')
+			.sort({ createdAt: -1 })
 			.skip((page - 1) * perPage)
 			.limit(perPage)
 			.select('-updatedAt');
@@ -92,11 +93,12 @@ exports.updatePost = (req, res, next) => {
 	}
 
 	Post.findById(postId)
+		.populate('creator')
 		.then(post => {
 			if (!post) {
 				return Err.throwError('Post not found!', 404);
 			}
-			if (post.creator.toString() !== req.userId) {
+			if (post.creator._id.toString() !== req.userId) {
 				return Err.throwError('Not authorized!', 403);
 			}
 			post.title = inputs.title;
@@ -109,33 +111,33 @@ exports.updatePost = (req, res, next) => {
 			return post.save();
 		})
 		.then(post => {
+			io.getIO().emit('posts', { action: 'update', post: post });
 			res.status(200).json({ post });
 		})
 		.catch(err => Err.catchError(err, next));
 };
 
-exports.deletePost = (req, res, next) => {
+exports.deletePost = async (req, res, next) => {
 	const postId = req.params.postId;
-	Post.findById(postId)
-		.then(post => {
-			if (!post) {
-				return Err.throwError('Post not found!', 404);
-			}
-			if (post.creator.toString() !== req.userId) {
-				return Err.throwError('Not authorized!', 403);
-			}
-			removeFile(post.imageUrl);
-			return Post.findByIdAndDelete(post._id);
-		})
-		.then(() => {
-			return User.findById(req.userId);
-		})
-		.then(user => {
-			user.posts.pull(postId);
-			return user.save();
-		})
-		.then(() => {
-			res.status(200).json({ message: 'Post deleted.' });
-		})
-		.catch(err => Err.catchError(err, next));
+	try {
+		const post = await Post.findById(postId);
+		if (!post) {
+			return Err.throwError('Post not found!', 404);
+		}
+		if (post.creator.toString() !== req.userId) {
+			return Err.throwError('Not authorized!', 403);
+		}
+		removeFile(post.imageUrl);
+		await Post.findByIdAndDelete(post._id);
+		const user = await User.findById(req.userId);
+
+		user.posts.pull(postId);
+		await user.save();
+
+		io.getIO.emit('posts', { action: 'delete', post: postId });
+
+		res.status(200).json({ message: 'Post deleted.' });
+	} catch (err) {
+		Err.catchError(err, next);
+	}
 };
