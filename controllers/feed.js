@@ -3,6 +3,7 @@ const { removeFile } = require('../util/storage');
 const { validationResult } = require('express-validator/check');
 
 const Post = require('../models/post');
+const User = require('../models/user');
 const Err = require('../util/error-handler');
 
 exports.getPosts = (req, res, next) => {
@@ -33,20 +34,31 @@ exports.createPost = (req, res, next) => {
 
 	const title = req.body.title;
 	const content = req.body.content;
+	let creator;
 	const post = new Post({
 		title: title,
 		content: content,
 		imageUrl: '/' + req.file.path,
-		creator: {
-			name: 'Pappy'
-		}
+		creator: req.userId
 	});
 	post
 		.save()
 		.then(post => {
+			return User.findById(req.userId);
+		})
+		.then(user => {
+			creator = user;
+			user.posts.push(post);
+			return user.save();
+		})
+		.then(user => {
 			res.status(201).json({
-				message: 'Post created successfully!',
-				post: post
+				message: 'Post created successfully.',
+				post: post,
+				creator: {
+					_id: creator._id.toString(),
+					name: creator.name
+				}
 			});
 		})
 		.catch(err => Err.catchError(err, next));
@@ -88,6 +100,9 @@ exports.updatePost = (req, res, next) => {
 			if (!post) {
 				return Err.throwError('Post not found!', 404);
 			}
+			if (post.creator.toString() !== req.userId) {
+				return Err.throwError('Not authorized!', 403);
+			}
 			post.title = inputs.title;
 			post.content = inputs.content;
 			if (post.imageUrl !== imageUrl) {
@@ -110,8 +125,18 @@ exports.deletePost = (req, res, next) => {
 			if (!post) {
 				return Err.throwError('Post not found!', 404);
 			}
+			if (post.creator.toString() !== req.userId) {
+				return Err.throwError('Not authorized!', 403);
+			}
 			removeFile(post.imageUrl);
 			return Post.findByIdAndDelete(post._id);
+		})
+		.then(() => {
+			return User.findById(req.userId);
+		})
+		.then(user => {
+			user.posts.pull(postId);
+			return user.save();
 		})
 		.then(() => {
 			res.status(200).json({ message: 'Post deleted.' });

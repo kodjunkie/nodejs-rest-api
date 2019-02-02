@@ -8,7 +8,9 @@ exports.throwError = (message, statusCode = 500, data = null) => {
 };
 
 exports.catchError = (error, next, statusCode = 500) => {
-	error.statusCode = statusCode;
+	if (!error.statusCode) {
+		error.statusCode = statusCode;
+	}
 	next(error);
 };
 
@@ -21,7 +23,7 @@ exports.errorHandler = (error, req, res, next) => {
 			resObj = { message: error.message, data: error.data };
 		}
 
-		return res.status(error.statusCode || 500).json(resObj);
+		return res.status(error.statusCode).json(resObj);
 	}
 	next();
 };
