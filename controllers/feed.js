@@ -6,23 +6,20 @@ const Post = require('../models/post');
 const User = require('../models/user');
 const Err = require('../util/error-handler');
 
-exports.getPosts = (req, res, next) => {
+exports.getPosts = async (req, res, next) => {
 	const page = +req.query.page || 1;
 	const perPage = 2;
-	let totalItems = 0;
-	Post.find()
-		.countDocuments()
-		.then(numPosts => {
-			totalItems = numPosts;
-			return Post.find()
-				.skip((page - 1) * perPage)
-				.limit(perPage)
-				.select('-updatedAt');
-		})
-		.then(posts => {
-			res.status(200).json({ posts: posts, totalItems: totalItems });
-		})
-		.catch(err => Err.catchError(err, next));
+	try {
+		const totalItems = await Post.find().countDocuments();
+		const posts = await Post.find()
+			.skip((page - 1) * perPage)
+			.limit(perPage)
+			.select('-updatedAt');
+
+		res.status(200).json({ posts: posts, totalItems: totalItems });
+	} catch (err) {
+		Err.catchError(err, next);
+	}
 };
 
 exports.createPost = (req, res, next) => {
