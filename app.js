@@ -3,10 +3,11 @@ const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const graphqlHttp = require('express-graphql');
 
+const graphqlSchema = require('./graphql/schema');
+const graphqlResolver = require('./graphql/resolvers');
 const multer = require('./middlewares/multer');
-const feedRoutes = require('./routes/feed');
-const authRoutes = require('./routes/auth');
 const { errorHandler } = require('./util/error-handler');
 
 const app = express();
@@ -22,20 +23,18 @@ app.use((req, res, next) => {
 	next();
 });
 
-app.use('/feed', feedRoutes);
-app.use('/auth', authRoutes);
+app.use(
+	'/graphql',
+	graphqlHttp({
+		schema: graphqlSchema,
+		rootValue: graphqlResolver
+	})
+);
 app.use(errorHandler);
 
 mongoose
-	.connect(
-		'mongodb://127.0.0.1:27017/messenger',
-		{ useNewUrlParser: true }
-	)
+	.connect('mongodb://127.0.0.1:27017/messenger', { useNewUrlParser: true })
 	.then(() => {
-		const server = app.listen(8080);
-		const io = require('./socket').init(server);
-		io.on('connection', socket => {
-			console.log('Client connected.');
-		});
+		app.listen(8080);
 	})
 	.catch(error => console.error(error));
