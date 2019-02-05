@@ -115,5 +115,32 @@ module.exports = {
 			updatedAt: createdPost.updatedAt.toISOString(),
 			creator: user._doc
 		};
+	},
+
+	getPosts: async function(args, req) {
+		if (!req.isAuth) {
+			return throwError('Not Authenticated!', 401);
+		}
+
+		const page = +args.page || 1;
+		const perPage = 2;
+		const totalItems = await Post.find().countDocuments();
+		const posts = await Post.find()
+			.populate('creator')
+			.sort({ createdAt: -1 })
+			.skip((page - 1) * perPage)
+			.limit(perPage)
+			.select('-updatedAt');
+
+		if (!posts) {
+			return throwError('No post found!', 404);
+		}
+
+		return {
+			posts: posts.map(post => {
+				return { ...post._doc, createdAt: post.createdAt.toISOString() };
+			}),
+			totalItems: totalItems
+		};
 	}
 };
