@@ -5,11 +5,12 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const graphqlHttp = require('express-graphql');
 
-const { errorHandler } = require('./util/error-handler');
+const { errorHandler, throwError } = require('./util/error-handler');
 const graphqlSchema = require('./graphql/schema');
 const graphqlResolver = require('./graphql/resolvers');
 const multer = require('./middlewares/multer');
 const auth = require('./middlewares/auth');
+const storage = require('./util/storage');
 
 const app = express();
 
@@ -28,6 +29,19 @@ app.use((req, res, next) => {
 });
 
 app.use(auth);
+
+app.put('/post-image', (req, res, next) => {
+	if (!req.isAuth) {
+		return throwError('Not Authenticated!', 401);
+	}
+	if (!req.file) {
+		return throwError('No file provided!', 200);
+	}
+	if (req.body.oldPath) {
+		storage.removeFile(req.body.oldPath);
+	}
+	return res.status(201).json({ path: '/' + req.file.path });
+});
 
 app.use(
 	'/graphql',
@@ -49,6 +63,7 @@ app.use(
 		}
 	})
 );
+
 app.use(errorHandler);
 
 mongoose
