@@ -101,7 +101,7 @@ module.exports = {
 		const post = new Post({
 			title: postInput.title,
 			content: postInput.content,
-			imageUrl: postInput.imageUrl,
+			imageUrl: '/' + postInput.imageUrl,
 			creator: user._id
 		});
 		const createdPost = await post.save();
@@ -155,5 +155,43 @@ module.exports = {
 		}
 
 		return { ...post._doc, createdAt: post.createdAt.toISOString() };
+	},
+
+	updatePost: async function({ id, postInput }, req) {
+		if (!req.isAuth) {
+			return throwError('Not Authenticated!', 401);
+		}
+
+		const post = await Post.findById(id).populate('creator');
+		if (!post) {
+			return throwError('No post found!', 404);
+		}
+		if (post.creator._id.toString() !== req.userId) {
+			return throwError("You're not authorized!", 403);
+		}
+
+		const errors = [];
+		if (validator.isEmpty(postInput.title) || !validator.isLength(postInput.title, { min: 5 })) {
+			errors.push({ message: 'Title is invalid.' });
+		}
+		if (validator.isEmpty(postInput.content) || !validator.isLength(postInput.content, { min: 5 })) {
+			errors.push({ message: 'Content is invalid.' });
+		}
+		if (errors.length > 0) {
+			return throwError('Invalid input', 422, errors);
+		}
+
+		post.title = postInput.title;
+		post.content = postInput.content;
+		if (postInput.imageUrl !== 'undefined') {
+			post.imageUrl = '/' + postInput.imageUrl;
+		}
+		const updatedPost = await post.save();
+
+		return {
+			...updatedPost._doc,
+			createdAt: updatedPost.createdAt.toISOString(),
+			_id: updatedPost._id.toString()
+		};
 	}
 };

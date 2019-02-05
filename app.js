@@ -40,7 +40,7 @@ app.put('/post-image', (req, res, next) => {
 	if (req.body.oldPath) {
 		storage.removeFile(req.body.oldPath);
 	}
-	return res.status(201).json({ path: '/' + req.file.path });
+	return res.status(201).json({ path: req.file.path });
 });
 
 app.use(
