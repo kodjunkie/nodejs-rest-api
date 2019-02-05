@@ -5,10 +5,11 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const graphqlHttp = require('express-graphql');
 
+const { errorHandler } = require('./util/error-handler');
 const graphqlSchema = require('./graphql/schema');
 const graphqlResolver = require('./graphql/resolvers');
 const multer = require('./middlewares/multer');
-const { errorHandler } = require('./util/error-handler');
+const auth = require('./middlewares/auth');
 
 const app = express();
 
@@ -26,6 +27,8 @@ app.use((req, res, next) => {
 	next();
 });
 
+app.use(auth);
+
 app.use(
 	'/graphql',
 	graphqlHttp({
@@ -33,6 +36,8 @@ app.use(
 		rootValue: graphqlResolver,
 		graphiql: true,
 		formatError(err) {
+			console.log(err);
+
 			if (!err.originalError) {
 				return err;
 			}
