@@ -1,7 +1,9 @@
 const fs = require('fs');
+const path = require('path');
 
 exports.removeFile = filePath => {
-	fs.unlink(filePath.substr(1), err => {
+	const rootDir = path.dirname(process.mainModule.filename);
+	fs.unlink(path.join(rootDir, filePath.substr(1)), err => {
 		if (err) {
 			console.log(err.message, err.code);
 		}

@@ -224,11 +224,41 @@ module.exports = {
 		}
 	},
 
-	getStatus: async function(args, req) {
+	user: async function(args, req) {
 		if (!req.isAuth) {
 			return throwError('Not Authenticated!', 401);
 		}
 		const user = await User.findById(req.userId);
-		return user.status;
+		if (!user) {
+			return throwError('Invalid user.', 401);
+		}
+
+		return {
+			...user._doc,
+			_id: user._id.toString(),
+			createdAt: user.createdAt.toISOString(),
+			updatedAt: user.updatedAt.toISOString()
+		};
+	},
+
+	updateStatus: async function({ status }, req) {
+		if (!req.isAuth) {
+			return throwError('Not Authenticated!', 401);
+		}
+
+		const user = await User.findById(req.userId);
+		if (!user) {
+			return throwError('Invalid user.', 401);
+		}
+
+		user.status = status;
+		await user.save();
+
+		return {
+			...user._doc,
+			_id: user._id.toString(),
+			createdAt: user.createdAt.toISOString(),
+			updatedAt: user.updatedAt.toISOString()
+		};
 	}
 };
