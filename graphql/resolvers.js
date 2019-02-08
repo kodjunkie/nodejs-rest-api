@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const { throwError } = require('../util/error-handler');
 const User = require('../models/user');
 const Post = require('../models/post');
+const { removeFile } = require('../util/storage');
 
 module.exports = {
 	signup: async function({ userInput }, req) {
@@ -193,5 +194,41 @@ module.exports = {
 			createdAt: updatedPost.createdAt.toISOString(),
 			_id: updatedPost._id.toString()
 		};
+	},
+
+	deletePost: async function({ id }, req) {
+		if (!req.isAuth) {
+			return throwError('Not Authenticated!', 401);
+		}
+
+		const post = await Post.findById(id);
+		if (!post) {
+			return throwError('No post found!', 404);
+		}
+
+		if (post.creator.toString() !== req.userId) {
+			return throwError("You're not authorized!", 403);
+		}
+
+		try {
+			removeFile(post.imageUrl);
+
+			await Post.findByIdAndDelete(id);
+			const user = await User.findById(req.userId);
+			user.posts.pull(id);
+			await user.save();
+
+			return true;
+		} catch (err) {
+			return false;
+		}
+	},
+
+	getStatus: async function(args, req) {
+		if (!req.isAuth) {
+			return throwError('Not Authenticated!', 401);
+		}
+		const user = await User.findById(req.userId);
+		return user.status;
 	}
 };
