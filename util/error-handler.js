@@ -16,8 +16,6 @@ exports.catchError = (error, next, statusCode = 500) => {
 
 exports.errorHandler = (error, req, res, next) => {
 	if (error) {
-		console.log(error);
-
 		let resObj = { message: error.message };
 		if (error.data) {
 			resObj = { message: error.message, data: error.data };

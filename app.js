@@ -7,7 +7,7 @@ const graphqlHttp = require('express-graphql');
 
 const { errorHandler, throwError } = require('./util/error-handler');
 const graphqlSchema = require('./graphql/schema');
-const graphqlResolver = require('./graphql/resolvers');
+const graphqlResolver = require('./graphql/resolver');
 const multer = require('./middlewares/multer');
 const auth = require('./middlewares/auth');
 const storage = require('./util/storage');
