@@ -2,7 +2,7 @@
 
 REST API backend for a simple feeds app using Node.js, Express.js, MongoDB and GraphQL.
 
-- Frontend `https://github.com/Paplow/rest-api-frontend-react`
+- Frontend [https://github.com/Paplow/rest-api-frontend-react](https://github.com/Paplow/rest-api-frontend-react)
 
 # Installation
 
