@@ -7,8 +7,8 @@ REST API backend for a simple feeds app using Node.js, Express.js, MongoDB and G
 # Installation
 
 ```bash
-    git clone https://github.com/Paplow/rest-api-backend.git
-    cd rest-api-backend
+    git clone https://github.com/Paplow/nodejs-rest-api.git
+    cd nodejs-rest-api
     npm install
     # Start mongodb server
     npm start
